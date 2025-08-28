@@ -61,8 +61,13 @@ jobs:
     # 步骤5：使用pytest运行测试
     - name: Test with pytest
       run: |
-        # 运行项目中的所有测试
-        pytest
+        # 检查是否存在测试文件，如果存在则运行测试
+        if find . -name "test_*.py" -o -name "*_test.py" | grep -q .; then
+          echo "Found test files, running pytest..."
+          pytest --tb=short -v
+        else
+          echo "No test files found, skipping tests"
+        fi
 
   # Windows环境下的PyInstaller构建任务
   pyinstaller-build:
