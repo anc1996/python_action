@@ -1,54 +1,95 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+# GitHub Actions工作流：自动化Python应用的构建和测试
+# 更多信息请参考: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
+# 工作流名称，会在GitHub Actions页面显示
 name: Python application
 
+# 触发条件：定义何时运行此工作流
 on:
+  # 当代码推送到main分支时触发
   push:
     branches: [ "main" ]
+  # 当创建针对main分支的Pull Request时触发
   pull_request:
     branches: [ "main" ]
 
+# 权限设置：定义此工作流可以执行的操作
 permissions:
-  contents: read
+  contents: read  # 允许读取仓库内容
 
+# 定义工作流中的任务
 jobs:
+  # 构建任务名称
   build:
-
+    # 指定运行环境为最新版Ubuntu
     runs-on: ubuntu-latest
-
+    
+    # 定义构建步骤
     steps:
+    # 步骤1：检出代码到运行环境
     - uses: actions/checkout@v4
+    
+    # 步骤2：设置Python环境
     - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v3  # 使用官方Python设置action
       with:
-        python-version: "3.10"
+        python-version: "3.10"  # 指定Python版本为3.10
+    
+    # 步骤3：安装项目依赖
     - name: Install dependencies
       run: |
+        # 升级pip到最新版本
         python -m pip install --upgrade pip
+        # 安装代码检查工具flake8和测试框架pytest
         pip install flake8 pytest
+        # 如果存在requirements.txt文件，则安装其中列出的依赖包
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    # 步骤4：使用flake8进行代码风格检查
     - name: Lint with flake8
       run: |
-        # stop the build if there are Python syntax errors or undefined names
+        # 检查Python语法错误和未定义的变量名，如果发现则停止构建
+        # E9: 语法错误, F63: 重复参数, F7: 语法错误, F82: 未定义变量
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-     
-  pyinstaller-build:
-      runs-on: windows-latest
-      steps:
-        - name: Create Executable
-          uses: sayyid5416/pyinstaller@v1
-          with:
-            python_ver: '3.12'
-            spec: 'main.py'
-            upload_exe_with_name: 'shrimp_package'
-            options: --onefile
-
-
-
-
-
-
         
+        # 进行全面的代码风格检查，但不会因警告而失败
+        # --exit-zero: 将所有错误视为警告，不会导致构建失败
+        # --max-complexity=10: 最大圈复杂度为10
+        # --max-line-length=127: 最大行长度为127字符（GitHub编辑器宽度）
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  # Windows环境下的PyInstaller构建任务
+  pyinstaller-build:
+    # 指定运行环境为最新版Windows
+    runs-on: windows-latest
+    # 确保构建任务在测试通过后运行
+    needs: build
+    
+    # 定义构建步骤
+    steps:
+    # 步骤1：检出代码到运行环境
+    - uses: actions/checkout@v4
+    
+    # 步骤2：使用PyInstaller创建可执行文件
+    - name: Create Executable
+      uses: sayyid5416/pyinstaller@v1
+      with:
+        # 指定Python版本为3.12
+        python_ver: "3.12"
+        # 指定要打包的Python文件（请根据你的项目修改）
+        spec: "main.py"
+        # 可选：设置其他PyInstaller参数
+        requirements: "requirements.txt"
+        # 上传目录（生成的exe文件位置）
+        upload_exe_with_name: "my-app"
+        # PyInstaller选项：--onefile生成单个exe文件
+        options: "--onefile"
+    
+    # 步骤3：上传构建产物
+    - name: Upload executable
+      uses: actions/upload-artifact@v3
+      with:
+        # 产物名称
+        name: windows-executable
+        # 产物路径（PyInstaller默认输出目录）
+        path: dist/*.exe
