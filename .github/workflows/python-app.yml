@@ -87,10 +87,8 @@ jobs:
       with:
         # 指定Python版本为3.12
         python_ver: "3.12"
-        # 指定要打包的Python文件（请根据你的项目修改）
+        # 指定要打包的Python文件
         spec: "main.py"
-        # 可选：设置其他PyInstaller参数
-        requirements: "requirements.txt"
         # 上传目录（生成的exe文件位置）
         upload_exe_with_name: "my-app"
         # PyInstaller选项：--onefile生成单个exe文件
