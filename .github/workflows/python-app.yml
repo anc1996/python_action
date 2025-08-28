@@ -31,7 +31,7 @@ jobs:
     
     # 步骤2：设置Python环境
     - name: Set up Python 3.10
-      uses: actions/setup-python@v3  # 使用官方Python设置action
+      uses: actions/setup-python@v5  # 更新到最新版本
       with:
         python-version: "3.10"  # 指定Python版本为3.10
     
@@ -57,6 +57,12 @@ jobs:
         # --max-complexity=10: 最大圈复杂度为10
         # --max-line-length=127: 最大行长度为127字符（GitHub编辑器宽度）
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    # 步骤5：使用pytest运行测试
+    - name: Test with pytest
+      run: |
+        # 运行项目中的所有测试
+        pytest
 
   # Windows环境下的PyInstaller构建任务
   pyinstaller-build:
@@ -87,7 +93,7 @@ jobs:
     
     # 步骤3：上传构建产物
     - name: Upload executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         # 产物名称
         name: windows-executable
