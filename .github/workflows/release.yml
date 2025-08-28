@@ -1,29 +1,68 @@
+# GitHub Actions工作流：自动创建Release版本
+# 当推送tag时自动构建exe并创建GitHub Release
+
+# 工作流名称
 name: Create Release
 
+# 触发条件：仅当推送以'v'开头的tag时触发
+# 例如：v1.0.0, v2.1.0, v1.0.0-beta 等
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # 匹配所有以v开头的tag
 
+# 权限设置：允许写入仓库内容（创建Release需要）
 permissions:
   contents: write
 
+# 定义工作流中的任务
 jobs:
+  # 构建和发布任务
   build:
+    # 指定运行环境为最新版Windows
     runs-on: windows-latest
+    
+    # 定义构建步骤
     steps:
+    # 步骤1：检出代码到运行环境
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # 步骤2：使用PyInstaller创建可执行文件
     - name: Create Executable
-      id: create_executable
+      id: create_executable  # 给这个步骤设置ID，方便后续引用
       uses: sayyid5416/pyinstaller@v1
       with:
+        # 指定Python版本为3.12
         python_ver: '3.12'
+        # 指定要打包的Python文件
         spec: 'main.py'
+        # 设置生成的exe文件名
         upload_exe_with_name: 'shrimp_package'
-        options: --onefile
-    - name: Release
+        # PyInstaller选项：生成单个exe文件
+        options: "--onefile"
+    
+    # 步骤3：创建GitHub Release并上传构建产物
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
+      # 条件：仅当推送的是tag时执行
       if: startsWith(github.ref, 'refs/tags/')
       with:
-          files: ./dist/**
-
-        
+        # 上传dist目录下的所有文件到Release
+        files: |
+          dist/*
+        # Release标题（可选，使用tag名称）
+        name: Release ${{ github.ref_name }}
+        # Release说明（可选）
+        body: |
+          ## 🎉 新版本发布
+          
+          ### 📦 包含文件
+          - shrimp_package.exe - 主程序可执行文件
+          
+          ### 🚀 使用方法
+          1. 下载 `shrimp_package.exe`
+          2. 双击运行即可
+          
+          ---
+          自动构建于: ${{ github.sha }}
